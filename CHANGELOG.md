@@ -5,15 +5,24 @@ Versions before `1.0.0` are `0Ver`-based:
 incremental in minor, bugfixes only are patches.
 See [0Ver](https://0ver.org/).
 
-## 0.30.0 WIP
+## 0.31.0 WIP
 
 ### Features
 
-- Add `python3.15` support
-- Add `mypy>=1.19,<2.5` support
+- Adds missing type annotations
 
+### Bugfixes
 
-## 0.29.1 WIP
+- Fix `{Success, Failure}.swap` returning `Any`
+- Fix type parameter variance of `Law{1,2,3}`, `Unwrappable`, `Contextable`,
+  and `Trampoline`
+
+## 0.30.0
+
+### Features
+
+- Adds `python3.15` support
+- Adds `mypy>=1.19,<2.5` support
 
 ### Bugfixes
 
@@ -24,6 +33,10 @@ See [0Ver](https://0ver.org/).
   `Coroutine` to `Awaitable`, so plain `async def` functions wrapping
   another awaitable (instead of being coroutine functions themselves)
   type-check correctly
+- Fixes `assert_trace` from our `pytest` plugin passing when the container
+  was created by a different function that uses the same decorator,
+  see #876
+- Fixes overridden method of `Some` returning `Any`
 
 
 ## 0.29.0

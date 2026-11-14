@@ -42,10 +42,10 @@ class ReturnsAsserts:
 
     @staticmethod  # noqa: WPS602
     def assert_equal(  # noqa: WPS602
-        first,
-        second,
+        first: object,
+        second: object,
         *,
-        deps=None,
+        deps: object | None = None,
         backend: str = 'asyncio',
     ) -> None:
         """Can compare two containers even with extra calling and awaiting."""
@@ -53,7 +53,7 @@ class ReturnsAsserts:
 
         assert_equal(first, second, deps=deps, backend=backend)
 
-    def is_error_handled(self, container) -> bool:
+    def is_error_handled(self, container: 'ResultLikeN[Any, Any, Any]') -> bool:
         """Ensures that container has its error handled in the end."""
         return id(container) in self._errors_handled
 
@@ -101,17 +101,37 @@ def _trace_function(
     )
     if is_desired_type_call:
         current_call_stack = inspect.stack()
-        function_to_search_code = getattr(function_to_search, '__code__', None)
         for frame_info in current_call_stack:
-            if function_to_search_code is frame_info.frame.f_code:
+            if _is_function_frame(function_to_search, frame_info.frame):
                 raise _DesiredFunctionFound
+
+
+def _is_function_frame(function: _FunctionType, frame: FrameType) -> bool:
+    function_code = getattr(function, '__code__', None)
+    if frame.f_code is not function_code:
+        return False
+
+    closure = getattr(function, '__closure__', None)
+    if not closure:
+        # Fast path: without a closure the code object is enough,
+        # so we don't touch the frame's locals at all:
+        return True
+
+    # Functions created by the same decorator share the same code object,
+    # so we also compare their closure variables to tell them apart:
+    frame_locals = frame.f_locals
+    return all(
+        frame_locals[name] is cell.cell_contents
+        for name, cell in zip(function_code.co_freevars, closure, strict=True)
+        if name in frame_locals
+    )
 
 
 class _DesiredFunctionFound(BaseException):  # noqa: WPS418
     """Exception to raise when expected function is found."""
 
 
-def pytest_configure(config) -> None:
+def pytest_configure(config: pytest.Config) -> None:
     """
     Hook to be executed on import.
 
